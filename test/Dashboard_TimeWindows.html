@@ -170,19 +170,19 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         let activeFilters = {};
         let charts = {};
         let currentRowLimit = 10000; // Default row limit for table display
-        const histogramVariables = ['Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_20', 'Classification_25', 'Classification_30', 'Classification_30Plus', 'Classification_Last'];
+        const histogramVariables = ['Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_30', 'Classification_45', 'Classification_60', 'Classification_60Plus', 'Classification_Last'];
         const histogramTitles = {
             'Classification_Initial': 'Initial Classification',
             'Classification_5': '5 Days',
             'Classification_10': '10 Days',
             'Classification_15': '15 Days',
-            'Classification_20': '20 Days',
-            'Classification_25': '25 Days',
             'Classification_30': '30 Days',
-            'Classification_30Plus': '+30 Days',
+            'Classification_45': '45 Days',
+            'Classification_60': '60 Days',
+            'Classification_60Plus': '+60 Days',
             'Classification_Last': 'Final Classification'
         };
-        const filterableVariables = ['SIGDetection', 'SIGCode', 'Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_20', 'Classification_25', 'Classification_30', 'Classification_30Plus', 'Classification_Last'];
+        const filterableVariables = ['SIGDetection', 'SIGCode', 'Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_30', 'Classification_45', 'Classification_60', 'Classification_60Plus', 'Classification_Last'];
         const counterColumnSuffix = '_Last';
         const defaultColors = {
             'MW': '#FF0000',
