@@ -1,1 +1,4 @@
 ﻿SampleId;SIGDetection;SIGCode;VTFirstSeen;VTLastSeen;AicsClassificationDate;Classification_Initial;Classification_5_Rescanned;Classification_10_Rescanned;Classification_15_Rescanned;Classification_30_Rescanned;Classification_45_Rescanned;Classification_60_Rescanned;Classification_60Plus_Rescanned;Classification_Last
+26295d62f517477a7540281315dccc06;Detected;2025;2026-06-19 00:32:25.00;2026-06-19 00:32:25.00;2026-06-20 00:00:00.00;MW;0;;;;;;;0
+4ab3e6e610694e6f25c4ad543301215e;SignedDetection;13092;2026-06-18 21:12:49.00;2026-06-20 08:50:47.00;2026-06-20 00:00:00.00;MW;0;;;;;;;0
+9815665da6ac0be5d69f3334cc151d5f;Detected;2106;2026-06-18 13:02:36.00;2026-06-20 11:25:23.00;2026-06-20 00:00:00.00;MW;0;;;;;;;0
