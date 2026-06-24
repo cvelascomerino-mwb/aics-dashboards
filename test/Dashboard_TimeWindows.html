@@ -173,7 +173,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const histogramVariables = ['Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_30', 'Classification_45', 'Classification_60', 'Classification_60Plus', 'Classification_Last'];
         const histogramTitles = {
             'Classification_Initial': 'Initial Classification',
-            'Classification_5': '≤5 Days',
+            'Classification_5': '=5 Days',
             'Classification_10': '5-10 Days',
             'Classification_15': '10-15 Days',
             'Classification_30': '15-30 Days',
@@ -183,7 +183,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             'Classification_Last': 'Last Classification'
         };
         const filterableVariables = ['SIGDetection', 'SIGCode', 'Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_30', 'Classification_45', 'Classification_60', 'Classification_60Plus', 'Classification_Last'];
-        const counterColumnSuffix = '_Last';
+        const counterColumnSuffix = '_Rescanned';
         const defaultColors = {
             'MW': '#FF0000',
             'GW': '#006400',
