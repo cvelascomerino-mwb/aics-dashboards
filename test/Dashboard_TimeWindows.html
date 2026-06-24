@@ -353,7 +353,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 const title = document.createElement('h3');
                 const displayName = histogramTitles[variable] || variable;
 
-                if (hasCounterColumn && counterCount > 0) {
+                if (hasCounterColumn) {
                     title.textContent = displayName + ' (Total = ' + totalWithValue + ', Rescanned = ' + counterCount + ')';
                 } else {
                     title.textContent = displayName + ' (' + totalWithValue + ')';
