@@ -328,9 +328,18 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
                     if (hasCounterColumn) {
                         const counterValue = row[counterColumn];
-                        if (counterValue && counterValue !== '') {
+                        // Count only rows where the counter column has value 1
+                        if (counterValue && (counterValue === '1' || counterValue === 1)) {
                             counterCount++;
                         }
+                    }
+                });
+
+                // Ensure all categorical values are included, even if they have 0 count
+                const allCategoricalValues = Object.keys(currentColors);
+                allCategoricalValues.forEach(catValue => {
+                    if (!(catValue in counts)) {
+                        counts[catValue] = 0;
                     }
                 });
 
@@ -345,7 +354,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 const displayName = histogramTitles[variable] || variable;
 
                 if (hasCounterColumn && counterCount > 0) {
-                    title.textContent = displayName + ' (' + counterCount + ')';
+                    title.textContent = displayName + ' (Total = ' + totalWithValue + ', Rescanned = ' + counterCount + ')';
                 } else {
                     title.textContent = displayName + ' (' + totalWithValue + ')';
                 }
