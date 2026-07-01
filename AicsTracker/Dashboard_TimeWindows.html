@@ -53,7 +53,7 @@
         .header-text { flex: 1; font-size: 0.9em; font-weight: 600; letter-spacing: 0.3px; }
         .filter-icon { cursor: pointer; padding: 6px 10px; margin-left: 8px; border-radius: 2px; transition: all 0.2s; font-size: 0.85em; opacity: 0.9; }
         .filter-icon:hover { background: rgba(255,255,255,0.2); opacity: 1; }
-        .column-filter-dropdown { display: none; position: fixed; background: white; border: 1px solid #d0d0d0; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 2000; min-width: 280px; max-height: 400px; overflow: hidden; }
+        .column-filter-dropdown { display: none; position: absolute; background: white; border: 1px solid #d0d0d0; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.2); z-index: 2000; min-width: 280px; max-height: 400px; overflow: hidden; }
         .column-filter-dropdown.show { display: flex; flex-direction: column; }
         .column-filter-search { width: calc(100% - 20px); margin: 10px; padding: 10px; border: 1px solid #d0d0d0; border-radius: 4px; font-size: 0.9em; outline: none; }
         .column-filter-search:focus { border-color: #0056b3; box-shadow: 0 0 0 2px rgba(0,86,179,0.1); }
@@ -524,11 +524,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             dropdown.dataset.column = column;
 
             const rect = thElement.getBoundingClientRect();
-            dropdown.style.position = "fixed";
-            dropdown.style.top = (rect.bottom + 5) + "px";
-            dropdown.style.left = rect.left + "px";
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            const scrollLeft = window.pageXOffset || document.documentElement.scrollLeft;
+            dropdown.style.position = "absolute";
+            dropdown.style.top = (rect.bottom + scrollTop + 5) + "px";
+            dropdown.style.left = (rect.left + scrollLeft) + "px";
 
-            const uniqueValues = [...new Set(rawData.map(row => row[column]))]
+            const uniqueValues = [...new Set(filteredData.map(row => row[column]))]
                 .filter(v => v !== '' && v !== null && v !== undefined)
                 .sort();
 
