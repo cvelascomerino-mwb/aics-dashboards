@@ -42,6 +42,10 @@
         .color-picker-item { display: flex; align-items: center; gap: 8px; }
         .color-picker-item label { font-size: 0.95em; }
         .color-picker-item input[type="color"] { width: 40px; height: 30px; border: none; border-radius: 4px; cursor: pointer; }
+        .min-value-filter-panel { background: white; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; }
+        .min-value-filter-label { font-weight: bold; color: #333; }
+        .min-value-filter-input { width: 90px; padding: 8px; border: 2px solid #0056b3; border-radius: 4px; font-size: 0.95em; }
+        .min-value-filter-info { color: #666; font-size: 0.9em; }
         .charts-container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; padding: 20px; }
         .chart-wrapper { background: white; border-radius: 4px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e0e0e0; }
         .chart-wrapper h3 { color: #0056b3; margin-bottom: 15px; text-align: center; font-size: 1.1em; font-weight: 600; }
@@ -83,6 +87,12 @@
             <div class="color-picker-panel">
                 <div class="color-picker-title">Customize Chart Colors:</div>
                 <div id="colorPickerContainer"></div>
+            </div>
+            <div class="min-value-filter-panel">
+                <label class="min-value-filter-label" for="minValueFilterInput">Samples tracked from (days):</label>
+                <input type="number" id="minValueFilterInput" class="min-value-filter-input" min="0" step="1" placeholder="All">
+                <button class="filter-btn" id="minValueFilterClearBtn">Clear</button>
+                <span id="minValueFilterInfo" class="min-value-filter-info"></span>
             </div>
         </div>
         <div id="chartsContainer" class="charts-container"></div>
@@ -170,17 +180,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         let activeFilters = {};
         let charts = {};
         let currentRowLimit = 10000; // Default row limit for table display
-        const histogramVariables = ['Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_30', 'Classification_45', 'Classification_60', 'Classification_60Plus', 'Classification_Last'];
+        const MIN_VALUE_FILTER_COLUMN = 'TrackedDays';
+        let minValueFilter = null; // Minimum value typed by the user, null means no filtering
+        const histogramVariables = ['Classification_Initial', 'Classification_Last'];
         const histogramTitles = {
             'Classification_Initial': 'Initial Classification',
-            'Classification_5': '≤5 Days',
-            'Classification_10': '5-10 Days',
-            'Classification_15': '10-15 Days',
-            'Classification_30': '15-30 Days',
-            'Classification_45': '30-45 Days',
-            'Classification_60': '45-60 Days',
-            'Classification_60Plus': '>60 Days',
-            'Classification_Last': 'Last Classification'
+            'Classification_Last': 'Final Classification'
         };
         const filterableVariables = ['SIGDetection', 'SIGCode', 'Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_30', 'Classification_45', 'Classification_60', 'Classification_60Plus', 'Classification_Last'];
         const counterColumnSuffix = '_Rescanned';
@@ -245,6 +250,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             renderCharts();
             renderTable();
             updateFilterCount();
+            updateMinValueFilterInfo();
         }
 
         function renderColorPickers() {
@@ -299,12 +305,39 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 for (let column in activeFilters) {
                     if (!activeFilters[column].has(row[column])) return false;
                 }
+                // Keep only the rows reaching the minimum value typed by the user
+                if (minValueFilter !== null && MIN_VALUE_FILTER_COLUMN) {
+                    const rowValue = parseFloat(row[MIN_VALUE_FILTER_COLUMN]);
+                    if (isNaN(rowValue) || rowValue < minValueFilter) return false;
+                }
                 return true;
             });
 
             renderCharts();
             renderTable();
             updateFilterCount();
+            updateMinValueFilterInfo();
+        }
+
+        // Reads the input box and refreshes charts and table
+        function applyMinValueFilter() {
+            const input = document.getElementById('minValueFilterInput');
+            if (!input) return;
+
+            const typedValue = parseFloat(input.value);
+            minValueFilter = isNaN(typedValue) ? null : typedValue;
+            applyAllFilters();
+        }
+
+        function updateMinValueFilterInfo() {
+            const info = document.getElementById('minValueFilterInfo');
+            if (!info) return;
+
+            if (minValueFilter === null) {
+                info.textContent = '(no filter, ' + rawData.length + ' samples)';
+            } else {
+                info.textContent = '(' + filteredData.length + ' of ' + rawData.length + ' samples)';
+            }
         }
 
         function renderCharts() {
@@ -800,9 +833,26 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
         document.getElementById('clearAllFiltersBtn').addEventListener('click', function() {
             activeFilters = {};
+            minValueFilter = null;
+            const minValueInput = document.getElementById('minValueFilterInput');
+            if (minValueInput) minValueInput.value = '';
             applyAllFilters();
             document.querySelectorAll('.filter-dropdown').forEach(d => d.classList.remove('show'));
         });
+
+        // Minimum value filter events (the elements only exist when the filter is configured)
+        const minValueFilterInput = document.getElementById('minValueFilterInput');
+        if (minValueFilterInput) {
+            minValueFilterInput.addEventListener('input', applyMinValueFilter);
+        }
+
+        const minValueFilterClearBtn = document.getElementById('minValueFilterClearBtn');
+        if (minValueFilterClearBtn) {
+            minValueFilterClearBtn.addEventListener('click', function() {
+                minValueFilterInput.value = '';
+                applyMinValueFilter();
+            });
+        }
 
         document.addEventListener('click', function(event) {
             if (!event.target.closest('.filter-container') && !event.target.closest('.export-dropdown') && !event.target.closest('.table-header') && !event.target.closest('.column-filter-dropdown')) {
