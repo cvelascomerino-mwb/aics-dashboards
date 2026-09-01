@@ -93,16 +93,16 @@
                 <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS"/> AICS</label>
                 <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT" checked/> VirusTotal</label>
             </div>
-            <div id="lastSourceToggle" class="initial-source-toggle">
-                <span class="initial-source-label">Last Classification Based On:</span>
-                <label class="initial-source-radio"><input type="radio" name="lastSource" value="AICS"/> AICS</label>
-                <label class="initial-source-radio"><input type="radio" name="lastSource" value="VT" checked/> VirusTotal</label>
-            </div>
             <div class="min-value-filter-panel">
                 <label class="min-value-filter-label" for="minValueFilterInput">Samples tracked for at least (days):</label>
                 <input type="number" id="minValueFilterInput" class="min-value-filter-input" min="0" step="1" placeholder="All">
                 <button class="filter-btn" id="minValueFilterClearBtn">Clear</button>
                 <span id="minValueFilterInfo" class="min-value-filter-info"></span>
+            </div>
+            <div id="lastSourceToggle" class="initial-source-toggle">
+                <span class="initial-source-label">Last Classification Based On:</span>
+                <label class="initial-source-radio"><input type="radio" name="lastSource" value="AICS"/> AICS</label>
+                <label class="initial-source-radio"><input type="radio" name="lastSource" value="VT" checked/> VirusTotal</label>
             </div>
         </div>
         <div id="chartsContainer" class="charts-container"></div>
