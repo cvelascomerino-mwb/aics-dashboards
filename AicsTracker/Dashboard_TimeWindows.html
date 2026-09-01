@@ -42,6 +42,10 @@
         .color-picker-item { display: flex; align-items: center; gap: 8px; }
         .color-picker-item label { font-size: 0.95em; }
         .color-picker-item input[type="color"] { width: 40px; height: 30px; border: none; border-radius: 4px; cursor: pointer; }
+        .initial-source-toggle { display: none; align-items: center; gap: 12px; background: white; border: 1px solid #ddd; border-radius: 4px; padding: 12px 15px; margin: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .initial-source-toggle .initial-source-label { font-weight: bold; color: #333; }
+        .initial-source-toggle .initial-source-radio { display: inline-flex; align-items: center; gap: 5px; cursor: pointer; color: #333; }
+        .initial-source-toggle input[type="radio"] { cursor: pointer; }
         .min-value-filter-panel { background: white; border: 1px solid #ddd; border-radius: 4px; padding: 15px; margin: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 10px; }
         .min-value-filter-label { font-weight: bold; color: #333; }
         .min-value-filter-input { width: 90px; padding: 8px; border: 2px solid #0056b3; border-radius: 4px; font-size: 0.95em; }
@@ -89,6 +93,11 @@
                 <input type="number" id="minValueFilterInput" class="min-value-filter-input" min="0" step="1" placeholder="All">
                 <button class="filter-btn" id="minValueFilterClearBtn">Clear</button>
                 <span id="minValueFilterInfo" class="min-value-filter-info"></span>
+            </div>
+            <div id="initialSourceToggle" class="initial-source-toggle">
+                <span class="initial-source-label">Initial classification source:</span>
+                <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS" checked/> AICS</label>
+                <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT"/> VirusTotal</label>
             </div>
         </div>
         <div id="chartsContainer" class="charts-container"></div>
@@ -182,6 +191,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         let currentRowLimit = 10000; // Default row limit for table display
         const MIN_VALUE_FILTER_COLUMN = 'TrackedDays';
         let minValueFilter = null; // Minimum value typed by the user, null means no filtering
+        let initialClassificationSource = 'AICS';
         const histogramVariables = ['Classification_Initial', 'Classification_Last'];
         const histogramTitles = {
             'Classification_Initial': 'Initial Classification',
@@ -246,11 +256,30 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // Initialize dashboard
         async function initializeDashboard() {
             await loadCsvData();
+            initInitialSourceToggle();
             renderColorPickers();
             renderCharts();
             renderTable();
             updateFilterCount();
             updateMinValueFilterInfo();
+        }
+
+        // Show the AICS/VirusTotal source toggle only when the Initial classification chart AND the VT column are both present.
+        // Wires the radios to re-render charts when the source is swapped.
+        function initInitialSourceToggle() {
+            const toggleEl = document.getElementById('initialSourceToggle');
+            if (!toggleEl) return;
+            const hasInitialChart = histogramVariables.indexOf('Classification_Initial') !== -1;
+            const hasVtInitialColumn = rawData.length > 0 && 'Classification_Initial_VT' in rawData[0];
+            if (!hasInitialChart || !hasVtInitialColumn) return;
+
+            toggleEl.style.display = 'flex';
+            document.querySelectorAll('input[name="initialSource"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    initialClassificationSource = this.value;
+                    renderCharts();
+                });
+            });
         }
 
         function renderColorPickers() {
@@ -349,6 +378,10 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             container.style.setProperty('--chart-columns', chartColumns);
 
             histogramVariables.forEach(variable => {
+                // When the user flips the toggle to VirusTotal, the Initial classification chart reads from Classification_Initial_VT instead.
+                // The counter column (_Rescanned) keeps referencing the original variable so the Rescanned count remains meaningful.
+                const useVtInitialSource = variable === 'Classification_Initial' && initialClassificationSource === 'VT';
+                const dataColumn = useVtInitialSource ? 'Classification_Initial_VT' : variable;
                 const counterColumn = counterColumnSuffix ? variable + counterColumnSuffix : null;
                 const hasCounterColumn = counterColumn && filteredData.length > 0 && counterColumn in filteredData[0];
 
@@ -357,7 +390,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 let counterCount = 0;
 
                 filteredData.forEach(row => {
-                    const value = row[variable];
+                    const value = row[dataColumn];
                     if (value && value !== '') {
                         counts[value] = (counts[value] || 0) + 1;
                         totalWithValue++;
@@ -388,7 +421,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 wrapper.className = 'chart-wrapper';
 
                 const title = document.createElement('h3');
-                const displayName = histogramTitles[variable] || variable;
+                let displayName = histogramTitles[variable] || variable;
+                // Show the current source next to the Initial classification title when the toggle is visible, so the user knows which column drives the chart
+                const initialSourceToggleEl = document.getElementById('initialSourceToggle');
+                const isInitialSourceToggleVisible = initialSourceToggleEl && initialSourceToggleEl.style.display !== 'none';
+                if (variable === 'Classification_Initial' && isInitialSourceToggleVisible) {
+                    displayName += useVtInitialSource ? ' (VT)' : ' (AICS)';
+                }
 
                 if (hasCounterColumn) {
                     title.textContent = displayName + ' (Total = ' + totalWithValue + ', Rescanned = ' + counterCount + ')';
