@@ -90,8 +90,8 @@
         <div class="controls">
             <div id="initialSourceToggle" class="initial-source-toggle">
                 <span class="initial-source-label">Initial classification source:</span>
-                <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS" checked/> AICS</label>
-                <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT"/> VirusTotal</label>
+                <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS"/> AICS</label>
+                <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT" checked/> VirusTotal</label>
             </div>
             <div class="min-value-filter-panel">
                 <label class="min-value-filter-label" for="minValueFilterInput">Samples tracked for at least (days):</label>
@@ -191,7 +191,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         let currentRowLimit = 10000; // Default row limit for table display
         const MIN_VALUE_FILTER_COLUMN = 'TrackedDays';
         let minValueFilter = null; // Minimum value typed by the user, null means no filtering
-        let initialClassificationSource = 'AICS';
+        let initialClassificationSource = 'VT';
         const histogramVariables = ['Classification_Initial', 'Classification_Last'];
         const histogramTitles = {
             'Classification_Initial': 'Initial Classification',
@@ -258,20 +258,21 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             await loadCsvData();
             initInitialSourceToggle();
             renderColorPickers();
-            renderCharts();
-            renderTable();
-            updateFilterCount();
-            updateMinValueFilterInfo();
+            // Apply filters after the toggle initialization so the default source (VT) is honored on the first render
+            applyAllFilters();
         }
 
         // Show the AICS/VirusTotal source toggle only when the Initial classification chart AND the VT column are both present.
-        // Wires the radios to re-render charts when the source is swapped.
+        // If the VT column is missing, fall back to AICS so the default VT selection doesn't wipe every row.
         function initInitialSourceToggle() {
             const toggleEl = document.getElementById('initialSourceToggle');
             if (!toggleEl) return;
             const hasInitialChart = histogramVariables.indexOf('Classification_Initial') !== -1;
             const hasVtInitialColumn = rawData.length > 0 && 'Classification_Initial_VT' in rawData[0];
-            if (!hasInitialChart || !hasVtInitialColumn) return;
+            if (!hasInitialChart || !hasVtInitialColumn) {
+                initialClassificationSource = 'AICS';
+                return;
+            }
 
             toggleEl.style.display = 'flex';
             document.querySelectorAll('input[name="initialSource"]').forEach(radio => {
