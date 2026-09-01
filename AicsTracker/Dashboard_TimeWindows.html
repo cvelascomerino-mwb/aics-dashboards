@@ -88,16 +88,16 @@
     <div class="container">
         <div class="header"><h1>AICS-Global Classification Evolution Dashboard <br/> (StaticIG FPs)</h1><p>Interactive Data Analysis Dashboard</p></div>
         <div class="controls">
+            <div id="initialSourceToggle" class="initial-source-toggle">
+                <span class="initial-source-label">Initial classification source:</span>
+                <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS" checked/> AICS</label>
+                <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT"/> VirusTotal</label>
+            </div>
             <div class="min-value-filter-panel">
                 <label class="min-value-filter-label" for="minValueFilterInput">Samples tracked for at least (days):</label>
                 <input type="number" id="minValueFilterInput" class="min-value-filter-input" min="0" step="1" placeholder="All">
                 <button class="filter-btn" id="minValueFilterClearBtn">Clear</button>
                 <span id="minValueFilterInfo" class="min-value-filter-info"></span>
-            </div>
-            <div id="initialSourceToggle" class="initial-source-toggle">
-                <span class="initial-source-label">Initial classification source:</span>
-                <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS" checked/> AICS</label>
-                <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT"/> VirusTotal</label>
             </div>
         </div>
         <div id="chartsContainer" class="charts-container"></div>
@@ -277,7 +277,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             document.querySelectorAll('input[name="initialSource"]').forEach(radio => {
                 radio.addEventListener('change', function() {
                     initialClassificationSource = this.value;
-                    renderCharts();
+                    // Re-apply all filters so the sample set (charts + table) matches the new source.
+                    // In VT mode this drops samples without a Classification_Initial_VT value.
+                    applyAllFilters();
                 });
             });
         }
@@ -338,6 +340,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 if (minValueFilter !== null && MIN_VALUE_FILTER_COLUMN) {
                     const rowValue = parseFloat(row[MIN_VALUE_FILTER_COLUMN]);
                     if (isNaN(rowValue) || rowValue < minValueFilter) return false;
+                }
+                // When the user picks VirusTotal as the Initial classification source, drop rows that
+                // do not have a VT initial classification. This keeps both charts (Initial and Final)
+                // and the table on the same sample set, so the comparison is apples-to-apples.
+                if (initialClassificationSource === 'VT') {
+                    const vtInitial = row['Classification_Initial_VT'];
+                    if (!vtInitial || vtInitial === '') return false;
                 }
                 return true;
             });
@@ -422,11 +431,12 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
                 const title = document.createElement('h3');
                 let displayName = histogramTitles[variable] || variable;
-                // Show the current source next to the Initial classification title when the toggle is visible, so the user knows which column drives the chart
+                // Replace the Initial classification title with the full source description when the toggle is available,
+                // so the reader knows exactly which tech stack produced the classification shown.
                 const initialSourceToggleEl = document.getElementById('initialSourceToggle');
                 const isInitialSourceToggleVisible = initialSourceToggleEl && initialSourceToggleEl.style.display !== 'none';
                 if (variable === 'Classification_Initial' && isInitialSourceToggleVisible) {
-                    displayName += useVtInitialSource ? ' (VT)' : ' (AICS)';
+                    displayName = useVtInitialSource ? 'VT (Virus Total Rules)' : 'AICS (VT + AICS Models + Mitre + GTI Score)';
                 }
 
                 if (hasCounterColumn) {
