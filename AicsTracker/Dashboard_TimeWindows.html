@@ -89,9 +89,14 @@
         <div class="header"><h1>AICS-Global Classification Evolution Dashboard <br/> (StaticIG FPs)</h1><p>Interactive Data Analysis Dashboard</p></div>
         <div class="controls">
             <div id="initialSourceToggle" class="initial-source-toggle">
-                <span class="initial-source-label">Initial classification source:</span>
+                <span class="initial-source-label">Initial Classification Based On:</span>
                 <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS"/> AICS</label>
                 <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT" checked/> VirusTotal</label>
+            </div>
+            <div id="lastSourceToggle" class="initial-source-toggle">
+                <span class="initial-source-label">Last Classification Based On:</span>
+                <label class="initial-source-radio"><input type="radio" name="lastSource" value="AICS"/> AICS</label>
+                <label class="initial-source-radio"><input type="radio" name="lastSource" value="VT" checked/> VirusTotal</label>
             </div>
             <div class="min-value-filter-panel">
                 <label class="min-value-filter-label" for="minValueFilterInput">Samples tracked for at least (days):</label>
@@ -192,10 +197,11 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         const MIN_VALUE_FILTER_COLUMN = 'TrackedDays';
         let minValueFilter = null; // Minimum value typed by the user, null means no filtering
         let initialClassificationSource = 'VT';
+        let lastClassificationSource = 'VT';
         const histogramVariables = ['Classification_Initial', 'Classification_Last'];
         const histogramTitles = {
             'Classification_Initial': 'Initial Classification',
-            'Classification_Last': 'Final Classification'
+            'Classification_Last': 'Last Classification'
         };
         const filterableVariables = ['SIGDetection', 'SIGCode', 'Classification_Initial', 'Classification_5', 'Classification_10', 'Classification_15', 'Classification_30', 'Classification_45', 'Classification_60', 'Classification_60Plus', 'Classification_Last'];
         const counterColumnSuffix = '_Rescanned';
@@ -256,33 +262,48 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
         // Initialize dashboard
         async function initializeDashboard() {
             await loadCsvData();
-            initInitialSourceToggle();
+            initSourceToggles();
             renderColorPickers();
             // Apply filters after the toggle initialization so the default source (VT) is honored on the first render
             applyAllFilters();
         }
 
-        // Show the AICS/VirusTotal source toggle only when the Initial classification chart AND the VT column are both present.
-        // If the VT column is missing, fall back to AICS so the default VT selection doesn't wipe every row.
-        function initInitialSourceToggle() {
-            const toggleEl = document.getElementById('initialSourceToggle');
-            if (!toggleEl) return;
+        // Show each AICS/VirusTotal source toggle only when its corresponding chart AND VT column are both present.
+        // If a VT column is missing, fall back to AICS for that side so the default VT selection doesn't wipe every row.
+        function initSourceToggles() {
+            const firstRow = rawData.length > 0 ? rawData[0] : {};
+
+            // Initial classification toggle
+            const initialToggleEl = document.getElementById('initialSourceToggle');
             const hasInitialChart = histogramVariables.indexOf('Classification_Initial') !== -1;
-            const hasVtInitialColumn = rawData.length > 0 && 'Classification_Initial_VT' in rawData[0];
-            if (!hasInitialChart || !hasVtInitialColumn) {
+            const hasVtInitialColumn = 'Classification_Initial_VT' in firstRow;
+            if (initialToggleEl && hasInitialChart && hasVtInitialColumn) {
+                initialToggleEl.style.display = 'flex';
+                document.querySelectorAll('input[name="initialSource"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        initialClassificationSource = this.value;
+                        applyAllFilters();
+                    });
+                });
+            } else {
                 initialClassificationSource = 'AICS';
-                return;
             }
 
-            toggleEl.style.display = 'flex';
-            document.querySelectorAll('input[name="initialSource"]').forEach(radio => {
-                radio.addEventListener('change', function() {
-                    initialClassificationSource = this.value;
-                    // Re-apply all filters so the sample set (charts + table) matches the new source.
-                    // In VT mode this drops samples without a Classification_Initial_VT value.
-                    applyAllFilters();
+            // Last classification toggle
+            const lastToggleEl = document.getElementById('lastSourceToggle');
+            const hasLastChart = histogramVariables.indexOf('Classification_Last') !== -1;
+            const hasVtLastColumn = 'Classification_Last_VT' in firstRow;
+            if (lastToggleEl && hasLastChart && hasVtLastColumn) {
+                lastToggleEl.style.display = 'flex';
+                document.querySelectorAll('input[name="lastSource"]').forEach(radio => {
+                    radio.addEventListener('change', function() {
+                        lastClassificationSource = this.value;
+                        applyAllFilters();
+                    });
                 });
-            });
+            } else {
+                lastClassificationSource = 'AICS';
+            }
         }
 
         function renderColorPickers() {
@@ -342,12 +363,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     const rowValue = parseFloat(row[MIN_VALUE_FILTER_COLUMN]);
                     if (isNaN(rowValue) || rowValue < minValueFilter) return false;
                 }
-                // When the user picks VirusTotal as the Initial classification source, drop rows that
-                // do not have a VT initial classification. This keeps both charts (Initial and Final)
-                // and the table on the same sample set, so the comparison is apples-to-apples.
+                // When the user picks VirusTotal for either the Initial or the Last classification, drop rows
+                // that do not have the corresponding VT column populated. Keeps both charts and the table
+                // on the same sample set, so the comparison is apples-to-apples.
                 if (initialClassificationSource === 'VT') {
                     const vtInitial = row['Classification_Initial_VT'];
                     if (!vtInitial || vtInitial === '') return false;
+                }
+                if (lastClassificationSource === 'VT') {
+                    const vtLast = row['Classification_Last_VT'];
+                    if (!vtLast || vtLast === '') return false;
                 }
                 return true;
             });
@@ -388,10 +413,13 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
             container.style.setProperty('--chart-columns', chartColumns);
 
             histogramVariables.forEach(variable => {
-                // When the user flips the toggle to VirusTotal, the Initial classification chart reads from Classification_Initial_VT instead.
+                // When the user flips a toggle to VirusTotal, the corresponding chart reads from the VT-normalized column instead.
                 // The counter column (_Rescanned) keeps referencing the original variable so the Rescanned count remains meaningful.
                 const useVtInitialSource = variable === 'Classification_Initial' && initialClassificationSource === 'VT';
-                const dataColumn = useVtInitialSource ? 'Classification_Initial_VT' : variable;
+                const useVtLastSource = variable === 'Classification_Last' && lastClassificationSource === 'VT';
+                const dataColumn = useVtInitialSource ? 'Classification_Initial_VT'
+                                 : useVtLastSource ? 'Classification_Last_VT'
+                                 : variable;
                 const counterColumn = counterColumnSuffix ? variable + counterColumnSuffix : null;
                 const hasCounterColumn = counterColumn && filteredData.length > 0 && counterColumn in filteredData[0];
 
@@ -432,12 +460,16 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
 
                 const title = document.createElement('h3');
                 let displayName = histogramTitles[variable] || variable;
-                // Replace the Initial classification title with the full source description when the toggle is available,
+                // Replace the Initial/Last classification title with the full source description when its toggle is available,
                 // so the reader knows exactly which tech stack produced the classification shown.
                 const initialSourceToggleEl = document.getElementById('initialSourceToggle');
                 const isInitialSourceToggleVisible = initialSourceToggleEl && initialSourceToggleEl.style.display !== 'none';
+                const lastSourceToggleEl = document.getElementById('lastSourceToggle');
+                const isLastSourceToggleVisible = lastSourceToggleEl && lastSourceToggleEl.style.display !== 'none';
                 if (variable === 'Classification_Initial' && isInitialSourceToggleVisible) {
                     displayName = useVtInitialSource ? 'VT (Virus Total Rules)' : 'AICS (VT + AICS Models + Mitre + GTI Score)';
+                } else if (variable === 'Classification_Last' && isLastSourceToggleVisible) {
+                    displayName = useVtLastSource ? 'VT (Virus Total Rules)' : 'AICS (VT + AICS Models + Mitre + GTI Score)';
                 }
 
                 if (hasCounterColumn) {
