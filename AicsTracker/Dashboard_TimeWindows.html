@@ -90,7 +90,7 @@
         <div class="controls">
             <div id="initialSourceToggle" class="initial-source-toggle">
                 <span class="initial-source-label">Initial Classification Based On:</span>
-                <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS"/> AICS</label>
+                <label class="initial-source-radio"><input type="radio" name="initialSource" value="AICS-Global"/> AICS-Global</label>
                 <label class="initial-source-radio"><input type="radio" name="initialSource" value="VT" checked/> VirusTotal</label>
             </div>
             <div class="min-value-filter-panel">
@@ -101,7 +101,7 @@
             </div>
             <div id="lastSourceToggle" class="initial-source-toggle">
                 <span class="initial-source-label">Last Classification Based On:</span>
-                <label class="initial-source-radio"><input type="radio" name="lastSource" value="AICS"/> AICS</label>
+                <label class="initial-source-radio"><input type="radio" name="lastSource" value="AICS-Global"/> AICS-Global</label>
                 <label class="initial-source-radio"><input type="radio" name="lastSource" value="VT" checked/> VirusTotal</label>
             </div>
         </div>
@@ -286,7 +286,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     });
                 });
             } else {
-                initialClassificationSource = 'AICS';
+                initialClassificationSource = 'AICS-Global';
             }
 
             // Last classification toggle
@@ -302,7 +302,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                     });
                 });
             } else {
-                lastClassificationSource = 'AICS';
+                lastClassificationSource = 'AICS-Global';
             }
         }
 
@@ -467,9 +467,9 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
                 const lastSourceToggleEl = document.getElementById('lastSourceToggle');
                 const isLastSourceToggleVisible = lastSourceToggleEl && lastSourceToggleEl.style.display !== 'none';
                 if (variable === 'Classification_Initial' && isInitialSourceToggleVisible) {
-                    displayName = useVtInitialSource ? 'VT (Virus Total Rules)' : 'AICS (VT + AICS Models + Mitre + GTI Score)';
+                    displayName = useVtInitialSource ? 'VT (Virus Total Rules)' : 'AICS-Global (VT + AICS Models + Mitre + GTI Score)';
                 } else if (variable === 'Classification_Last' && isLastSourceToggleVisible) {
-                    displayName = useVtLastSource ? 'VT (Virus Total Rules)' : 'AICS (VT + AICS Models + Mitre + GTI Score)';
+                    displayName = useVtLastSource ? 'VT (Virus Total Rules)' : 'AICS-Global (VT + AICS Models + Mitre + GTI Score)';
                 }
 
                 if (hasCounterColumn) {
